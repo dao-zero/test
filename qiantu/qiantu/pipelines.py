@@ -8,6 +8,7 @@
 from itemadapter import ItemAdapter
 import pymysql
 
+
 class QiantuPipeline:
     def __init__(self):
         self.connect = pymysql.connect(
@@ -21,28 +22,47 @@ class QiantuPipeline:
         self.cursor = self.connect.cursor()
 
     def process_item(self, item, spider):
-        # item = LiepspiderItem()
-        industry = item['industry']
         job_name = item['job_name']
-        address = item['address']
-        salary = item['salary']
-        company_name = item['company_name']
-        company_type = item['company_type']
-        education = item['education']
-        experience = item['experience']
-        welfare = item['welfare']
-        print(job_name)
-        insert_sql = "INSERT INTO job_second(industry, job_name, address,salary, company_name, company_type" \
-                     ",education, experience, welfare) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (
-                                                                                    industry, job_name, address,
-                                                                                    salary, company_name, company_type,
-                                                                                    education, experience, welfare)
-        # insert_sql = "INSERT INTO job_second(industry, job_name, address,salary, company_name, company_type" \
-        #              ",education, experience, welfare) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (
-        #                  item['industry'], item['job_name'], item['address'],
-        #                  item['salary'], item['company_name'], item['company_type'],
-        #                  item['education'], item['experience'], item['welfare'])
+        try:
+            address = item['address']
+            print(address)
+        except KeyError:
+            address = " "
+        salary = item['job_salary']
 
+        # salary = re.sub('\\\\', '', job_salary[i])
+        if salary != '':
+            j_b = re.split('-|/', salary)
+            if len(j_b) > 2:
+                if j_b[2] == '年':
+                    if j_b[1][-1] == '万':
+                        j_b[0] = str(round(float(j_b[0]) * 10 / 12, 2))
+                        j_b[1] = str(
+                            round(float(j_b[1][:-1]) * 10 / 12, 2)) + 'k'
+                    j_b[2] = '月'
+                elif j_b[2] == '月':
+                    if j_b[1][-1] == '万':
+                        j_b[0] = str(float(j_b[0]) * 10)
+                        j_b[1] = str(float(j_b[1][:-1]) * 10) + 'k'
+                    else:
+                        j_b[1] = str(float(j_b[1][:-1])) + 'k'
+            else:
+                salary = "日结"
+            salary = j_b[0]+"-"+j_b[1]+"/"+j_b[2]
+        # item['job_salary'] = j_b[0] + "-" + j_b[1] + "/" + j_b[2]
+
+        education = item['edu']
+        if education == " ":
+            education = "面议"
+        p_num = item['people_num']
+        experience = item['job_exp']
+        welfare = item['job_welfare']
+        if welfare == "":
+            welfare = "面议"
+        # print(job_name)
+        insert_sql = "INSERT INTO job_first(job_name, address,salary,p_num" \
+                     ",education, experience, welfare) VALUES ('%s','%s','%s','%s','%s','%s','%s')" % (
+                         job_name, address, salary, p_num, education, experience, welfare)
         self.cursor.execute(insert_sql)
         self.connect.commit()
 
