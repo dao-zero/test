@@ -14,6 +14,6 @@ class QiantuItem(scrapy.Item):
     job_welfare = scrapy.Field()
     job_exp = scrapy.Field()
     address = scrapy.Field()
-    # address_small = scrapy.Field()
+    address_small = scrapy.Field()
     people_num = scrapy.Field()
     edu = scrapy.Field()
